@@ -2,7 +2,7 @@ import asyncio
 import datetime
 
 from scripts.core.handler.db_handler.sql import SQLHandler
-from scripts.core.schemas.users import RegisterUser, LoginUser
+from scripts.core.schemas.users import RegisterUser, LoginUser, PasswordReset, UpdateUserData
 from scripts.exceptions import UserManagementException
 from scripts.utils.jwt import JWTUtil
 from scripts.utils.password import PasswordHashingUtil
@@ -45,6 +45,7 @@ class UserHandler:
         Log in a user with the provided login data.
 
         :param login_data: Data required for user login.
+        :param response: fastapi response
         :return: Confirmation message or user details.
         """
         user = await self.sql_handler.check_user_exists_by_mail(login_data.email)
@@ -77,10 +78,7 @@ class UserHandler:
         :param reset_data: Data required for password reset.
         :return: Confirmation message or user details.
         """
-        user = await self.sql_handler.check_user_exists_by_mail(reset_data['email'])
-        if not user:
-            raise UserManagementException("User with this email does not exist.")
-        user = user[0]
+        user = await self.get_user_by_email(reset_data['email'])
         reset_token = JWTUtil.request_reset_password_token(
             {"user_id": user.id, "email": user.email}
         )
@@ -90,10 +88,83 @@ class UserHandler:
             "reset_token_expiry": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
         }, filter_condition={"user_id": user.id
                              })
-        asyncio.create_task(
 
-        )
         return {
             "status": "success",
             "message": "Password reset requested. Check your email for the reset link.",
         }
+
+    async def verify_reset_password(self, reset_token: str):
+        """
+        Verify the request reset details
+        :param reset_token: Reset token from email
+        """
+        user_metadata = await self.sql_handler.get_user_metadata(reset_token=reset_token)
+        if not user_metadata:
+            raise UserManagementException("Password Reset Expired. Please try again afresh")
+        return {
+            "status": "success",
+            "message": "Reset Token verified successfully"
+        }
+
+    async def reset_password(self, reset_password_payload: PasswordReset):
+        """
+        Reset the password for the user
+        :param reset_password_payload: Reset password payload with email and password
+        """
+        reset_password_payload.password = PasswordHashingUtil.hash_password(reset_password_payload.password)
+        self.sql_handler.update_user({
+            "password": reset_password_payload.password
+        }, filter_condition={"email": reset_password_payload.email})
+        return {
+            "status":"success",
+            "message": "Password Reset is done successfully, Please login with new password"
+        }
+    async def request_email_verify(self, email: str):
+        """
+        This function email the user to verify
+
+        :param email: Email to verify
+        """
+        user = await self.get_user_by_email(email)
+        reset_token = JWTUtil.request_reset_password_token(
+            {"user_id": user.id, "email": user.email}
+        )
+        #todo keep email sending part here
+        return {
+            "status": "success",
+            "message": "An email has been sent to verify your. Please follow the instructions mentioned"
+        }
+
+    async def get_user(self, email:str):
+        user = await self.sql_handler.check_user_exists_by_mail(email=email)
+        if not user:
+            raise UserManagementException("User with this email does not exist.")
+        user = user[0]
+        return user
+
+    async def get_user_by_id(self, user_id: str):
+        user = await self.sql_handler.get_user_by_id(user_id=user_id)
+        return {
+            "status": "success",
+            "message":"User data fetched successfully",
+            "data":user
+        }
+
+    async def update_user_data_by_id(self, user_data: UpdateUserData):
+        user_info = await self.get_user_by_id(user_id=user_data.user_id)
+        if not user_info.get("data"):
+            raise UserManagementException("User with this email does not exist.")
+        self.sql_handler.update_user(user_data=user_data.model_dump(exclude={"user_id", "user_metadata"}),
+                                     filter_condition={"id":user_data.user_id})
+        self.sql_handler.update_user_metadata(
+            user_metadata=user_data.user_metadata.model_dump(),
+            filter_condition={"user_id":user_data.user_id}
+        )
+        return {
+            "status":"success",
+            "message":"User info updated successfully"
+        }
+
+
+

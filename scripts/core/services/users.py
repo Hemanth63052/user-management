@@ -46,6 +46,14 @@ async def request_password_reset():
     """
     return {"message": "Password reset requested"}
 
+@user_router.post("/verify-password-reset/{reset_token}", summary="Request password reset")
+async def request_password_reset(reset_token:str):
+    """
+    Endpoint to request a password reset.
+    This endpoint will handle sending a password reset link to the user's email.
+    """
+    return {"message": "Password reset requested"}
+
 @user_router.put("/reset-password", summary="Reset user password")
 async def reset_password():
     """

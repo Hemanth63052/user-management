@@ -60,7 +60,7 @@ class SQLOps:
         self.session.commit()
         return each
 
-    async def update_query(self, data: dict, model, filter_condition):
+    def update_query(self, data: dict, model, filter_condition):
         """
         Execute an update SQL query.
 
@@ -70,11 +70,11 @@ class SQLOps:
         :return: The result of the executed update query.
         """
         query = model.__table__.update().where(filter_condition).values(data)
-        result = await self.session.execute(query)
-        await self.session.commit()
+        result = self.session.execute(query)
+        self.session.commit()
         return result
 
-    async def delete_query(self, model, filter_condition):
+    def delete_query(self, model, filter_condition):
         """
         Execute a delete SQL query.
 
@@ -83,8 +83,8 @@ class SQLOps:
         :return: The result of the executed delete query.
         """
         query = model.__table__.delete().where(filter_condition)
-        result = await self.session.execute(query)
-        await self.session.commit()
+        result = self.session.execute(query)
+        self.session.commit()
         return result
 
 

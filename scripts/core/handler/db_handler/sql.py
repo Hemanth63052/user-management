@@ -60,3 +60,20 @@ class SQLHandler:
         :return: The result of the update operation.
         """
         return self.sql_ops.update_query(data=user_metadata, model=UserMetadata, filter_condition=filter_condition)
+
+    async def get_user_metadata(self, reset_token: str):
+        """
+        Get the user metadata from the database.
+
+        :params filter_conditions: The condition to filter which user metadata to update.
+        :return: The result of the operation.
+        """
+        query = SQLQueries.get_user_metadata_by_reset_token(reset_token)
+        result = await self.sql_ops.execute_query(query=query)
+        return result
+
+    async def get_user_by_id(self, user_id: str):
+        query = SQLQueries.get_user_by_id(user_id=user_id)
+        result = await self.sql_ops.execute_query(query=query, json_result=True, first_result=True)
+        return result
+

@@ -1,3 +1,6 @@
+import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 class RegisterUser(BaseModel):
@@ -48,6 +51,29 @@ class PasswordReset(BaseModel):
     Schema for resetting a user's password.
     This schema is used to validate the data when a user resets their password.
     """
-    reset_token: str
-    new_password: str
+    password: str
+    email: str
+
+class UpdateUserMetaData(BaseModel):
+    """
+    Schema for updating the user metadata
+    """
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    locked_until: Optional[datetime.datetime] = None
+    profile_picture: Optional[str] = None
+
+
+class UpdateUserData(BaseModel):
+    """
+    Schema for updating the user data
+    """
+    user_id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    role: Optional[str] = None
+    user_metadata: UpdateUserMetaData
+
+
 
