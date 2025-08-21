@@ -36,3 +36,15 @@ class SQLQueries:
             Users.user_metadata
         )).filter((Users.id == user_id))
         return query
+
+    @staticmethod
+    def get_user_metadata_by_verification_token(verification_token: str):
+        """
+        SQL query to get user metadata by verification token.
+
+        :arg.
+            verification_token (str): The verification token to filter user metadata.
+        :return:
+            select: SQLAlchemy select query to get user metadata.
+        """
+        return select(UserMetadata).options(joinedload(UserMetadata.user)).filter(UserMetadata.email_verification_token == verification_token)

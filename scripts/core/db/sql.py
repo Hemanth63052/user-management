@@ -20,7 +20,7 @@ class SQLHandler:
         :return: True if the user exists, False otherwise.
         """
         query = SQLQueries.check_user_with_email(email)
-        result = await self.sql_ops.execute_query(query=query)
+        result = await self.sql_ops.execute_query(query=query, first_result=True)
         return result
 
     def insert_new_user(self, user_data: dict):
@@ -75,5 +75,16 @@ class SQLHandler:
     async def get_user_by_id(self, user_id: str):
         query = SQLQueries.get_user_by_id(user_id=user_id)
         result = await self.sql_ops.execute_query(query=query, json_result=True, first_result=True)
+        return result
+
+    async def get_user_metadata_by_verification_token(self, verification_token: str):
+        """
+        Get user metadata by verification token.
+
+        :param verification_token: The token used for email verification.
+        :return: The user metadata if found, otherwise None.
+        """
+        query = SQLQueries.get_user_metadata_by_verification_token(verification_token)
+        result = await self.sql_ops.execute_query(query=query, first_result=True)
         return result
 

@@ -75,5 +75,12 @@ class UpdateUserData(BaseModel):
     role: Optional[str] = None
     user_metadata: UpdateUserMetaData
 
+class RequestEmailVerify(BaseModel):
+    """
+    Schema for requesting email verification.
+    This schema is used to validate the data when a user requests email verification.
+    """
+    email: str
+
 
 

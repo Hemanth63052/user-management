@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from scripts.core.services import all_routers
+from scripts.core.routes import all_routers
 
 
 from scripts.config import ModuleConfig

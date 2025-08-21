@@ -1,7 +1,8 @@
 import asyncio
 import datetime
 
-from scripts.core.handler.db_handler.sql import SQLHandler
+from scripts.core.db.sql import SQLHandler
+from scripts.core.services.email import verify_email, reset_password
 from scripts.core.schemas.users import RegisterUser, LoginUser, PasswordReset, UpdateUserData
 from scripts.exceptions import UserManagementException
 from scripts.utils.jwt import JWTUtil
@@ -78,7 +79,9 @@ class UserHandler:
         :param reset_data: Data required for password reset.
         :return: Confirmation message or user details.
         """
-        user = await self.get_user_by_email(reset_data['email'])
+        user = await self.sql_handler.check_user_exists_by_mail(reset_data['email'])
+        if not user:
+            raise UserManagementException("User with this email does not exist.")
         reset_token = JWTUtil.request_reset_password_token(
             {"user_id": user.id, "email": user.email}
         )
@@ -88,7 +91,10 @@ class UserHandler:
             "reset_token_expiry": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
         }, filter_condition={"user_id": user.id
                              })
-
+        asyncio.create_task(reset_password.ResetPassword(
+            reset_token = reset_token,
+            to_email=user.email,
+        ))
         return {
             "status": "success",
             "message": "Password reset requested. Check your email for the reset link.",
@@ -126,14 +132,41 @@ class UserHandler:
 
         :param email: Email to verify
         """
-        user = await self.get_user_by_email(email)
+        user = await self.sql_handler.check_user_exists_by_mail(email)
+        if not user:
+            raise UserManagementException("User with this email does not exist.")
+        user = user[0]
         reset_token = JWTUtil.request_reset_password_token(
-            {"user_id": user.id, "email": user.email}
+            {"user_id": str(user.id), "email": str(user.email)}
         )
-        #todo keep email sending part here
+        verify_handler = verify_email.VerifyEmailHandler()
+        asyncio.create_task(verify_handler(
+            to_email=user.email,
+            verification_token=reset_token,
+            user_name=f"{user.first_name} {user.last_name}"
+        ))
         return {
             "status": "success",
             "message": "An email has been sent to verify your. Please follow the instructions mentioned"
+        }
+
+    async def verify_email(self, verification_token: str):
+        """
+        Verify the email using the verification token.
+
+        :param verification_token: Token to verify the email.
+        :return: Confirmation message.
+        """
+        user_metadata = await self.sql_handler.get_user_metadata_by_verification_token(verification_token=verification_token)
+        if not user_metadata:
+            raise UserManagementException("Email Verification Expired. Please try again afresh")
+        self.sql_handler.update_user_metadata(
+            {"email_verified": True, "email_verification_token": None},
+            filter_condition={"user_id": user_metadata.user_id}
+        )
+        return {
+            "status": "success",
+            "message": "Email verified successfully."
         }
 
     async def get_user(self, email:str):

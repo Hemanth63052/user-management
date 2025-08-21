@@ -17,6 +17,8 @@ class _ModuleConfig(BaseSettings):
     PORT: int = 8000
     RELOAD_ASGI: bool = True
     CORS_ORIGINS: list[str] = ['*']
+    DOMAIN_URL: str = "http://localhost:8000"
+    APP_NAME: str = "Adapt IQ"
 
     @model_validator(mode="before")
     def validate(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -34,6 +36,10 @@ class _ModuleConfig(BaseSettings):
         if "CORS_ORIGINS" in values:
             if isinstance(values["CORS_ORIGINS"], str):
                 values["CORS_ORIGINS"] = values["CORS_ORIGINS"].strip().split(",")
+        if "DOMAIN_URL" not in values or not values["DOMAIN_URL"]:
+            raise ValueError("DOMAIN_URL must be provided")
+        if "DOMAIN_URL" in values:
+            values["DOMAIN_URL"] = values["DOMAIN_URL"].strip().rstrip('/')
         return values
 
 
@@ -85,9 +91,39 @@ class _SQLConfig(BaseSettings):
         values["SQL_URL"] = values["SQL_URL"].strip().rstrip('/')
         return values
 
+class _EmailConfig(BaseSettings):
+    """
+    Configuration settings for email.
+    This class is used to load environment variables related to email settings.
+    """
+    SMTP_SERVER: str
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    EMAIL_FROM: str
+    ALLOW_SSL: bool = True
+
+    @model_validator(mode="before")
+    def validate(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validate the email configuration settings.
+        This method can be used to add custom validation logic if needed.
+
+        Args:
+            values (Any): The values to validate.
+        Returns:
+            Self: The validated email configuration instance.
+        """
+        if "SMTP_SERVER" not in values or not values["SMTP_SERVER"]:
+            raise ValueError("SMTP_SERVER must be provided")
+        if "ALLOW_SSL" in values and  isinstance(values['ALLOW_SSL'], str):
+            values['ALLOW_SSL'] = values['ALLOW_SSL'].lower() in ('true', '1')
+        return values
+
 
 ModuleConfig = _ModuleConfig()
 JWTConfig = _JWTConfig()
 SQLConfig = _SQLConfig()
+EmailConfig = _EmailConfig()
 
-__all__ = ["ModuleConfig", "JWTConfig", "SQLConfig"]
+__all__ = ["ModuleConfig", "JWTConfig", "SQLConfig", "EmailConfig"]
