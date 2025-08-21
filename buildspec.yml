@@ -3,18 +3,14 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.12
+      python: 3.11
     commands:
-      - pip install -r requirements.txt
+      - pip install -r requirements.txt -t package/
   build:
     commands:
-      - sam build              # build SAM template
-      - sam package \
-          --s3-bucket $DEPLOYMENT_BUCKET \
-          --output-template-file packaged.yaml
+      - cp -r * package/
+      - cd package
+      - zip -r ../user-management.zip .
 artifacts:
   files:
-    - packaged.yaml
-cache:
-  paths:
-    - '/root/.cache/pip/**/*'
+    - user-management.zip
