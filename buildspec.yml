@@ -3,14 +3,25 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.11
+      python: 3.12
     commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
       - pip install -r requirements.txt -t package/
+
   build:
     commands:
-      - cp -r * package/
+      - echo "Packaging application code..."
+      # Copy Python source files from scripts/ into package/
+      - cp -r scripts/* package/
       - cd package
       - zip -r ../user-management.zip .
+
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - ls -lh ../user-management.zip
+
 artifacts:
   files:
     - user-management.zip
