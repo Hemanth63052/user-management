@@ -7,18 +7,19 @@ phases:
     commands:
       - echo "Installing dependencies..."
       - pip install --upgrade pip
-      - pip install -r requirements.txt -t package/
 
   build:
     commands:
       - echo "Packaging application code..."
       - mkdir -p package
-      # Copy application code
+      # Install dependencies into package
+      - pip install -r requirements.txt -t package/
+      # Copy application code into package
       - cp *.py package/
       - cp -r scripts package/
-      # Move into package and zip everything into final artifact
+      # Create final artifact (contents only, no extra folder)
       - cd package
-      - zip -r ../user-management.zip .
+      - zip -r ../user-management.zip *
 
   post_build:
     commands:
