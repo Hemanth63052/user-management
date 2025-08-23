@@ -13,9 +13,10 @@ phases:
     commands:
       - echo "Packaging application code..."
       - mkdir -p package
-      # Copy all Python files from root and scripts/
+      # Copy application code
       - cp *.py package/
-      - cp -r scripts/* package/
+      - cp -r scripts package/
+      # Move into package and zip everything into final artifact
       - cd package
       - zip -r ../user-management.zip .
 
