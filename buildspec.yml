@@ -5,28 +5,17 @@ phases:
     runtime-versions:
       python: 3.12
     commands:
-      - echo "Installing dependencies..."
       - pip install --upgrade pip
+      - mkdir -p package
+      - pip install -r requirements.txt -t package/
 
   build:
     commands:
-      - echo "Packaging application code..."
-      - mkdir -p package
-      # Install dependencies into package
-      - pip install -r requirements.txt -t package/
-      # Copy application code into package
+      # Copy app code into package
       - cp *.py package/
       - cp -r scripts package/
-      # Create final artifact (contents only, no extra folder)
-      - cd package
-      - zip -r ../user-management.zip *
-
-  post_build:
-    commands:
-      - echo "Build completed on `date`"
-      - ls -lh ../user-management.zip
 
 artifacts:
+  base-directory: package
   files:
-    - user-management.zip
-  discard-paths: yes
+    - '**/*'
