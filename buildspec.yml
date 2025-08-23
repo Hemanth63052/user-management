@@ -19,3 +19,4 @@ artifacts:
   base-directory: package
   files:
     - '**/*'
+
