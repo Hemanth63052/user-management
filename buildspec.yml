@@ -12,7 +12,9 @@ phases:
   build:
     commands:
       - echo "Packaging application code..."
-      # Copy Python source files from scripts/ into package/
+      - mkdir -p package
+      # Copy all Python files from root and scripts/
+      - cp *.py package/
       - cp -r scripts/* package/
       - cd package
       - zip -r ../user-management.zip .
