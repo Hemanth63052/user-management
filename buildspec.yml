@@ -6,17 +6,14 @@ phases:
       python: 3.12
     commands:
       - pip install --upgrade pip
-      - mkdir -p package
-      - pip install -r requirements.txt -t package/
+      - pip install -r requirements.txt -t .
 
   build:
     commands:
-      # Copy app code into package
-      - cp *.py package/
-      - cp -r scripts package/
+      # Copy app code into current directory (root of artifact)
+      - cp *.py .
+      - cp -r scripts .
 
 artifacts:
-  base-directory: package
   files:
     - '**/*'
-
