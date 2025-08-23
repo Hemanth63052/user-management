@@ -28,3 +28,4 @@ phases:
 artifacts:
   files:
     - user-management.zip
+  discard-paths: yes
