@@ -1,27 +1,29 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      python: 3.12
+  pre_build:
     commands:
-      - echo "Installing dependencies..."
-      - pip install --upgrade pip
-      - pip install -r requirements.txt -t package/
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - echo IMAGE_REPO_NAME=$IMAGE_REPO_NAME
+      - echo LAMBDA_FUNCTION=$LAMBDA_FUNCTION
 
   build:
     commands:
-      - echo "Packaging application code..."
-      # Copy Python source files from scripts/ into package/
-      - cp -r scripts/* package/
-      - cd package
-      - zip -r ../user-management.zip .
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $IMAGE_REPO_NAME:latest .
+      - docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
 
   post_build:
     commands:
-      - echo "Build completed on `date`"
-      - ls -lh ../user-management.zip
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+      - echo Updating Lambda function to use new image...
+      - aws lambda update-function-code \
+          --function-name $LAMBDA_FUNCTION \
+          --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
 
 artifacts:
-  files:
-    - user-management.zip
+  files: []   # No artifacts, since image is in ECR
