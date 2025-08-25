@@ -14,5 +14,6 @@ COPY . ./
 # Install Python dependencies
 RUN pip install -r requirements.txt
 
-# Define default command
-CMD ["python", "app.py"]
+# Set the CMD to your handler
+# e.g., if app.py has `handler = Mangum(app)`
+CMD ["app.handler"]
