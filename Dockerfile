@@ -1,19 +1,11 @@
-FROM python:3.12.3-slim
+FROM public.ecr.aws/lambda/python:3.12
 
-ENV APP_HOME /app
-
-# Upgrade pip
-RUN pip install --upgrade pip
-
-# Set working directory
-WORKDIR $APP_HOME
-
-# Copy project files
-COPY . ./
-
-# Install Python dependencies
+# Copy dependencies first
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Set the CMD to your handler
-# e.g., if app.py has `handler = Mangum(app)`
+# Copy code
+COPY . .
+
+# Set CMD to your handler function (file.function_name)
 CMD ["app.handler"]
